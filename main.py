@@ -1,7 +1,14 @@
 import networkx as nx
-
-import networkx as nx
 import matplotlib.pyplot as plt
+import simpy
+import random
+
+#Création de la fonction d'appelle
+def appel(env):
+    for loop in range (10):
+        duree = random.randint(1,5)
+
+
 
 # Création des noeuds 
 G = nx.Graph()
@@ -15,18 +22,18 @@ G.add_node("U2")
 G.add_node("U3")
 
 # Création des arrêtes
-G.add_edge("CTS1", "CA1", weight=10)
-G.add_edge("CTS1", "CA2", weight=10)
-G.add_edge("CTS1", "CA3", weight=10)
-G.add_edge("CTS1", "CTS2", weight=10)
-G.add_edge("CTS2", "CA1", weight=10)
-G.add_edge("CTS2", "CA2", weight=10)
-G.add_edge("CTS2", "CA3", weight=10)
-G.add_edge("CA1", "U1", weight=10)
+G.add_edge("CTS1", "CA1", weight=100)
+G.add_edge("CTS1", "CA2", weight=100)
+G.add_edge("CTS1", "CA3", weight=100)
+G.add_edge("CTS1", "CTS2", weight=1000)
+G.add_edge("CTS2", "CA1", weight=100)
+G.add_edge("CTS2", "CA2", weight=100)
+G.add_edge("CTS2", "CA3", weight=100)
+G.add_edge("CA1", "U1")
 G.add_edge("CA1", "CA2", weight=10)
-G.add_edge("CA2", "U2", weight=10)
+G.add_edge("CA2", "U2")
 G.add_edge("CA2", "CA3", weight=10)
-G.add_edge("CA3", "U3", weight=10)
+G.add_edge("CA3", "U3")
 
 # Position des noeuds pour créer le graphe
 pos = {
@@ -42,6 +49,5 @@ pos = {
 
 # Affichage du graphe
 plt.figure(figsize=(8, 8))
-nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lightblue", font_size=10, font_weight="bold")
-plt.title("Graph Representation of the Network")
+nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lime", font_size=10, font_weight="bold")
 plt.show()
