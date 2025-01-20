@@ -36,9 +36,8 @@ G.add_edge("CA2", "CA3", capacity=10)
 G.add_edge("CA3", "U3")
 
 # Ajout des ressources pour les arrêtes
-for u, v in G.edges():
-    if 'capacity' in G[u][v]:  # Vérifie si une capacité est définie
-        G[u][v]['resource'] = simpy.Resource(env, capacity=G[u][v]['capacity'])
+for u, v in G.edges:
+    G[u][v]['current_load'] = 0
 
 
 ################################################################################################
@@ -61,3 +60,8 @@ pos = {
 plt.figure(figsize=(8, 8))
 nx.draw(G, pos, with_labels=True, node_size=3000, node_color="lightgreen", font_size=10, font_weight="bold")
 plt.show()
+
+################################################################################################
+#                                       Fonctions                                              #
+################################################################################################
+
