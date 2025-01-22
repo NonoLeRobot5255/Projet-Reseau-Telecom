@@ -61,15 +61,28 @@ def routage_statique(G, source, dest):
 
 def routage_partCharge(G,source,dest):
     cheminMax = 0
-    cheminDuMax = None
+    cheminDuMax = []
     for path in nx.all_simple_paths(G,source,dest):
-        capaChemin = capa_chemin = sum(G[u][v].get('capacity', float('inf')) for u, v in zip(path[:-1], path[1:]))
- 
-        if  capaChemin > cheminMax:
-            cheminMax = capaChemin
+        capaChemin =  sum(G[u][v].get('capacity', 0) for u, v in zip(path[:-1], path[1:]))
+        score = capaChemin/len(path)
+        if  score > cheminMax:
+            cheminMax = score 
             cheminDuMax = path
+            
     return cheminDuMax
 
+def routage_adaptatif(G,source,dest):
+    cheminMax = 0
+    cheminDuMax = []
+    for path in nx.all_simple_paths(G,source,dest):
+        capaChemin =  sum(G[u][v].get('capacity', 0) for u, v in zip(path[:-1], path[1:]))
+        capautilise = sum((G[u][v]['current_load'] / G[u][v]['capacity']) for u, v in zip(path[:-1], path[1:]))
+        score = (capaChemin-capautilise)/len(path)
+        if  score > cheminMax:
+            cheminMax = score 
+            cheminDuMax = path
+            
+    return cheminDuMax
 ################################################################################################
 #                                       Fonctions                                              #
 ################################################################################################
@@ -98,48 +111,65 @@ def appel(env, G, duree,chemin):
 
 # Fonction de simulation des appels
 def simulation (env,G,i,choix):
-    compte = 0
+    reinitialisation(G)
     while True:
-        compte += 1
         yield env.timeout(2/i)
         source, dest = random.sample(["CA1","CA2","CA3"], 2)
         if choix == 1:
             chemin = routage_statique(G,source,dest)
         elif choix ==2:
             chemin = routage_partCharge(G,source,dest)
+        elif choix ==3:
+            chemin = routage_adaptatif(G,source,dest)
         else :
             print("erreur")
         env.process(appel(env, G, random.randint(1, 5),chemin))
+
+#Fonction de réinitialisation des charges
+def reinitialisation(G):
+    for u, v in G.edges:
+        G[u][v]['current_load'] = 0
     
 ################################################################################################
 #                                       Simulation                                             #
 ################################################################################################
-simu = range(1,1001,20) 
+simu = range(1,2000,20) 
 result = []
 result1= []
+result2= []
 for i in simu:
     env = simpy.Environment()
     total_appels = 0
     appels_bloques = 0
-    env.process(simulation(env,G,i,1))
+    env.process(simulation(env, G, i, 1))
     env.run(until=50)
-    result.append(appels_bloques/total_appels)
+    result.append(appels_bloques / total_appels)
 
 for i in simu:
     env = simpy.Environment()
     total_appels = 0
     appels_bloques = 0
-    env.process(simulation(env,G,i,2))
+    env.process(simulation(env, G, i, 2))
     env.run(until=50)
-    result1.append(appels_bloques/total_appels)
+    result1.append(appels_bloques / total_appels)
+
+for i in simu:
+    env = simpy.Environment()
+    total_appels = 0
+    appels_bloques = 0
+    env.process(simulation(env, G, i, 3))
+    env.run(until=50)
+    result2.append(appels_bloques / total_appels)
 
 
-plt.semilogx(simu, result, label="Scénario 1")
-plt.semilogx(simu, result1, label="Scénario 2")
+
+plt.plot(simu, result, label="routage statique")
+plt.plot(simu, result1, label="routage avec partage de charge")
+plt.plot(simu, result2, label="routage adaptatif")
 plt.grid(True)
 plt.legend()
 plt.title("Comparaison des scénarios")
-plt.xlabel("Simu (paramètre)")
+plt.xlabel("Nombre d'appels par seconde")
 plt.ylabel("Taux d'appels bloqués")
 
 # Affichage
