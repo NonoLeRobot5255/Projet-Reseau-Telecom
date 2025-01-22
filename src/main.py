@@ -54,15 +54,32 @@ pos = {
 #plt.show()
 
 ################################################################################################
+#                               Fonctions de routage                                           #
+################################################################################################
+def routage_statique(G, source, dest):
+    return nx.shortest_path(G,source,dest)
+
+def routage_partCharge(G,source,dest):
+    cheminMax = 0
+    cheminDuMax = None
+    for path in nx.all_simple_paths(G,source,dest):
+        capaChemin = capa_chemin = sum(G[u][v].get('capacity', float('inf')) for u, v in zip(path[:-1], path[1:]))
+ 
+        if  capaChemin > cheminMax:
+            cheminMax = capaChemin
+            cheminDuMax = path
+    return cheminDuMax
+
+################################################################################################
 #                                       Fonctions                                              #
 ################################################################################################
 
 # Fonction de routage statique
-def appel(env, G, source, dest, duree):
+def appel(env, G, duree,chemin):
     global appels_bloques, total_appels
     total_appels += 1
     
-    chemin = nx.shortest_path(G, source, dest)
+    
     if all(G[u][v]['current_load'] + 1 <= G[u][v].get('capacity', float('inf')) for u, v in zip(chemin[:-1], chemin[1:])):
         for u, v in zip(chemin[:-1], chemin[1:]):
             G[u][v]['current_load'] += 1
@@ -80,33 +97,50 @@ def appel(env, G, source, dest, duree):
 
 
 # Fonction de simulation des appels
-def simulation (env,G,i):
+def simulation (env,G,i,choix):
     compte = 0
     while True:
         compte += 1
         yield env.timeout(2/i)
-        source, dest = random.sample(list(G.nodes), 2)
-
-        env.process(appel(env, G, source, dest, random.randint(1, 5)))
+        source, dest = random.sample(["CA1","CA2","CA3"], 2)
+        if choix == 1:
+            chemin = routage_statique(G,source,dest)
+        elif choix ==2:
+            chemin = routage_partCharge(G,source,dest)
+        else :
+            print("erreur")
+        env.process(appel(env, G, random.randint(1, 5),chemin))
     
-
-
 ################################################################################################
 #                                       Simulation                                             #
 ################################################################################################
-simu = range(1,1001,20)
+simu = range(1,1001,20) 
 result = []
+result1= []
 for i in simu:
     env = simpy.Environment()
     total_appels = 0
     appels_bloques = 0
-    env.process(simulation(env,G,i))
-    env.run(until=5000)
+    env.process(simulation(env,G,i,1))
+    env.run(until=50)
     result.append(appels_bloques/total_appels)
 
-plt.semilogx(simu,result)
+for i in simu:
+    env = simpy.Environment()
+    total_appels = 0
+    appels_bloques = 0
+    env.process(simulation(env,G,i,2))
+    env.run(until=50)
+    result1.append(appels_bloques/total_appels)
+
+
+plt.semilogx(simu, result, label="Scénario 1")
+plt.semilogx(simu, result1, label="Scénario 2")
 plt.grid(True)
 plt.legend()
+plt.title("Comparaison des scénarios")
+plt.xlabel("Simu (paramètre)")
+plt.ylabel("Taux d'appels bloqués")
 
 # Affichage
 plt.show()
