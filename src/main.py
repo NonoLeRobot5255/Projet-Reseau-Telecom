@@ -101,7 +101,7 @@ for i in simu:
     total_appels = 0
     appels_bloques = 0
     env.process(simulation(env,G,i))
-    env.run(until=50)
+    env.run(until=5000)
     result.append(appels_bloques/total_appels)
 
 plt.semilogx(simu,result)
