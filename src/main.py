@@ -60,16 +60,18 @@ def routage_statique(G, source, dest):
     return nx.shortest_path(G,source,dest)
 
 def routage_partCharge(G,source,dest):
-    cheminMax = 0
-    cheminDuMax = []
-    for path in nx.all_simple_paths(G,source,dest):
-        capaChemin =  sum(G[u][v].get('capacity', 0) for u, v in zip(path[:-1], path[1:]))
-        score = capaChemin/len(path)
-        if  score > cheminMax:
-            cheminMax = score 
-            cheminDuMax = path
-            
-    return cheminDuMax
+    chemins = list(nx.all_simple_paths(G, source, dest))
+    poids_chemins = []
+        
+    for chemin in chemins:
+        poids = sum(G[u][v]['capacity'] for u, v in zip(chemin[:-1], chemin[1:]))
+        poids_chemins.append(poids)
+        
+    total_poids = sum(poids_chemins)
+    probabilites = [poids / total_poids for poids in poids_chemins]
+        
+    chemin_choisi = random.choices(chemins, weights=probabilites, k=1)[0]
+    return chemin_choisi
 
 def routage_adaptatif(G,source,dest):
     cheminMax = 0
@@ -104,7 +106,7 @@ def appel(env, G, duree,chemin):
 
        
     else:
-        #on récupère ici les appels bloquès pour les compter
+        #on récupère ici les appels bloqués pour les compter
         appels_bloques += 1
         
 
@@ -133,6 +135,7 @@ def reinitialisation(G):
 ################################################################################################
 #                                       Simulation                                             #
 ################################################################################################
+
 simu = range(1,2000,20) 
 result = []
 result1= []
@@ -153,13 +156,13 @@ for i in simu:
     env.run(until=50)
     result1.append(appels_bloques / total_appels)
 
-for i in simu:
-    env = simpy.Environment()
-    total_appels = 0
-    appels_bloques = 0
-    env.process(simulation(env, G, i, 3))
-    env.run(until=50)
-    result2.append(appels_bloques / total_appels)
+#for i in simu:
+    #env = simpy.Environment()
+   # total_appels = 0
+   # appels_bloques = 0
+  #  env.process(simulation(env, G, i, 3))
+  #  env.run(until=50)
+  #  result2.append(appels_bloques / total_appels)
 
 
 
